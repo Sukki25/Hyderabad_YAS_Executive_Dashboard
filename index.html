@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyderabad YAS — Executive Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #1a3a6b;
+    --blue: #2d6bc4;
+    --blue-light: #4a90d9;
+    --teal: #0d7377;
+    --green: #27ae60;
+    --orange: #e67e22;
+    --amber: #f39c12;
+    --red: #c0392b;
+    --purple: #6c3483;
+    --bg: #eef2f7;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7a99;
+    --border: #dce3f0;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+
+  /* ── HEADER ── */
+  .dashboard-header {
+    background: linear-gradient(135deg, #0d1b3e 0%, #1a3a6b 60%, #1a5c8c 100%);
+    color: #fff; padding: 18px 28px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-left h1 { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+  .header-left p { font-size: 12px; color: #a8c8e8; margin-top: 3px; }
+  .header-right { text-align: right; font-size: 11px; color: #a8c8e8; line-height: 1.6; }
+  .header-right strong { color: #ffd700; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    background: var(--navy); color: #fff; padding: 8px 16px;
+    font-size: 13px; font-weight: 700; letter-spacing: .8px;
+    text-transform: uppercase; margin: 20px 0 12px;
+    border-left: 4px solid var(--amber); border-radius: 3px 0 0 3px;
+  }
+  .section-title span { opacity: .65; font-weight: 400; font-size: 11px; margin-left: 8px; text-transform: none; }
+
+  /* ── MAIN CONTAINER ── */
+  .container { max-width: 1600px; margin: 0 auto; padding: 16px 20px 40px; }
+
+  /* ── KPI STRIP ── */
+  .kpi-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-bottom: 8px; }
+  .kpi-card {
+    background: var(--card); border-radius: 8px; padding: 14px 14px 12px;
+    border-top: 4px solid var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    text-align: center;
+  }
+  .kpi-card.kpi-green { border-top-color: var(--green); }
+  .kpi-card.kpi-orange { border-top-color: var(--orange); }
+  .kpi-card.kpi-red { border-top-color: var(--red); }
+  .kpi-card.kpi-amber { border-top-color: var(--amber); }
+  .kpi-card.kpi-purple { border-top-color: var(--purple); }
+  .kpi-card.kpi-teal { border-top-color: var(--teal); }
+  .kpi-value { font-size: 28px; font-weight: 800; color: var(--navy); line-height: 1.1; }
+  .kpi-label { font-size: 10.5px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 14px; margin-bottom: 14px; }
+  .grid-3-2 { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; margin-bottom: 14px; }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--card); border-radius: 8px; padding: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07); border: 1px solid var(--border);
+  }
+  .card-title {
+    font-size: 12px; font-weight: 700; color: var(--navy); text-transform: uppercase;
+    letter-spacing: .6px; margin-bottom: 12px; padding-bottom: 8px;
+    border-bottom: 2px solid var(--border); display: flex; align-items: center; gap: 6px;
+  }
+  .card-title .badge {
+    background: var(--blue); color: #fff; font-size: 9px; padding: 2px 6px;
+    border-radius: 10px; font-weight: 600; letter-spacing: .3px;
+  }
+  .chart-wrap { position: relative; }
+  .chart-wrap-sm { height: 200px; }
+  .chart-wrap-md { height: 260px; }
+  .chart-wrap-lg { height: 320px; }
+  .chart-wrap-xl { height: 380px; }
+
+  /* ── TABLES ── */
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th {
+    background: var(--navy); color: #fff; padding: 7px 10px; text-align: left;
+    font-weight: 600; font-size: 11px; letter-spacing: .3px;
+  }
+  th.right, td.right { text-align: right; }
+  th.center, td.center { text-align: center; }
+  td { padding: 6px 10px; border-bottom: 1px solid #edf0f7; color: var(--text); }
+  tr:nth-child(even) td { background: #f7f9fc; }
+  tr:hover td { background: #eef3fb; }
+  .rank-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 20px; height: 20px; background: var(--blue); color: #fff;
+    border-radius: 50%; font-size: 10px; font-weight: 700;
+  }
+  .rank-badge.top3 { background: var(--amber); }
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .inline-bar { height: 8px; background: var(--blue-light); border-radius: 4px; min-width: 4px; }
+  .inline-bar.green { background: var(--green); }
+  .inline-bar.orange { background: var(--orange); }
+  .inline-bar.red { background: var(--red); }
+  .pct-label { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  /* ── FINDING CARDS ── */
+  .findings-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
+  .finding-card {
+    background: var(--card); border-radius: 8px; padding: 12px; border-left: 4px solid var(--blue);
+    box-shadow: 0 2px 6px rgba(0,0,0,.07);
+  }
+  .finding-card.f-orange { border-left-color: var(--orange); }
+  .finding-card.f-red { border-left-color: var(--red); }
+  .finding-card.f-green { border-left-color: var(--green); }
+  .finding-card.f-purple { border-left-color: var(--purple); }
+  .finding-num { font-size: 11px; font-weight: 700; color: var(--blue); margin-bottom: 4px; }
+  .finding-theme { font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+  .finding-text { font-size: 11px; color: var(--muted); line-height: 1.45; }
+
+  /* ── IMPLICATIONS ── */
+  .impl-list { list-style: none; }
+  .impl-list li {
+    padding: 7px 12px; border-left: 3px solid var(--blue-light); margin-bottom: 6px;
+    background: #f0f6ff; border-radius: 0 6px 6px 0; font-size: 12px; color: var(--text); line-height: 1.45;
+  }
+  .impl-list li::before { content: '▸ '; color: var(--blue); font-weight: 700; }
+
+  /* ── SURVEY CONTEXT TABLE ── */
+  .context-table td:first-child { font-weight: 600; color: var(--navy); width: 180px; white-space: nowrap; }
+
+  /* ── METRIC COMPARISON ── */
+  .metric-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .metric-label { font-size: 12px; width: 180px; flex-shrink: 0; color: var(--text); }
+  .metric-bar-outer { flex: 1; height: 14px; background: #e8ecf4; border-radius: 7px; overflow: hidden; }
+  .metric-bar-inner { height: 100%; border-radius: 7px; }
+  .metric-pct { font-size: 12px; font-weight: 700; width: 46px; text-align: right; color: var(--navy); }
+
+  /* ── STAT PAIR ── */
+  .stat-pair { display: flex; gap: 12px; }
+  .stat-item { flex: 1; background: #f0f6ff; border-radius: 8px; padding: 12px; text-align: center; }
+  .stat-item.green { background: #f0fff4; }
+  .stat-item.red { background: #fff0f0; }
+  .stat-item.amber { background: #fffbf0; }
+  .stat-big { font-size: 24px; font-weight: 800; color: var(--navy); }
+  .stat-label { font-size: 10.5px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  /* ── BUDGET CARD ── */
+  .budget-total { background: linear-gradient(135deg, #1a3a6b, #2d6bc4); color: #fff; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 12px; }
+  .budget-total .val { font-size: 32px; font-weight: 800; }
+  .budget-total .sub { font-size: 12px; opacity: .8; margin-top: 4px; }
+
+  /* ── TIER CARDS ── */
+  .tier-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .tier-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; color: #fff; }
+  .tier-1 { background: #c0392b; }
+  .tier-2 { background: #e67e22; }
+  .tier-3 { background: #2d6bc4; }
+
+  /* ── SUCCESS METRICS ── */
+  .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .metric-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .metric-card-title { font-size: 11px; font-weight: 700; color: var(--navy); margin-bottom: 8px; }
+  .metric-progress { display: flex; gap: 8px; }
+  .progress-item { flex: 1; text-align: center; }
+  .progress-label { font-size: 9.5px; color: var(--muted); margin-bottom: 3px; }
+  .progress-val { font-size: 14px; font-weight: 700; color: var(--navy); }
+  .progress-val.target { color: var(--green); }
+
+  /* ── INSIGHT BOX ── */
+  .insight { background: #fffbea; border: 1px solid #f0d070; border-radius: 6px; padding: 10px 12px; font-size: 11.5px; color: #7d5a00; margin-top: 10px; line-height: 1.5; }
+  .insight strong { color: #5a3e00; }
+
+  /* ── TAGS ── */
+  .tag { display: inline-block; background: #e8f0fe; color: var(--navy); font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; margin: 1px; }
+  .tag.green { background: #e8f8ee; color: #1a6e35; }
+  .tag.orange { background: #fff3e0; color: #7d4000; }
+
+  /* ── DATA QUALITY ── */
+  .dq-good { color: #27ae60; font-weight: 700; }
+  .dq-warn { color: #e67e22; font-weight: 700; }
+  .dq-crit { color: #c0392b; font-weight: 700; }
+
+  /* ── FOOTER ── */
+  .footer { text-align: center; padding: 20px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 30px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════ HEADER -->
+<div class="dashboard-header">
+  <div class="header-left">
+    <h1>🏮 Hyderabad Youth Aspiration Survey — Executive Dashboard</h1>
+    <p>Borabanda Lighthouse Initiative &nbsp;|&nbsp; Survey: Feb 5 – Feb 18, 2026 &nbsp;|&nbsp; Field Surveyors: 76 &nbsp;|&nbsp; Communities: 30+</p>
+  </div>
+  <div class="header-right">
+    <strong>n = 1,254 Valid Respondents</strong><br>
+    of 1,612 total rows (77.8% usable)<br>
+    232-column KoboToolbox / ODK instrument
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════════════════ KPI STRIP -->
+<div class="section-title">📊 Headline KPIs</div>
+<div class="kpi-strip">
+  <div class="kpi-card">
+    <div class="kpi-value">1,254</div>
+    <div class="kpi-label">Total Valid<br>Respondents</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-value">60/40</div>
+    <div class="kpi-label">Male / Female<br>Split (%)</div>
+  </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-value">62.3%</div>
+    <div class="kpi-label">Unemployed &amp;<br>Willing to Work</div>
+  </div>
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-value">92.5%</div>
+    <div class="kpi-label">Never Enrolled in<br>Vocational Training</div>
+  </div>
+  <div class="kpi-card kpi-amber">
+    <div class="kpi-value">55.8%</div>
+    <div class="kpi-label">Unaware Vocational<br>Courses Exist</div>
+  </div>
+  <div class="kpi-card kpi-teal">
+    <div class="kpi-value">72%</div>
+    <div class="kpi-label">Willing / Very Willing<br>to Enroll in Skilling</div>
+  </div>
+  <div class="kpi-card kpi-purple">
+    <div class="kpi-value">91.7%</div>
+    <div class="kpi-label">Willing to Travel to<br>Lighthouse for Skilling</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 1: EXECUTIVE SUMMARY -->
+<div class="section-title">1 · Executive Summary <span>Survey Context, Headline Findings & Strategic Implications</span></div>
+
+<!-- Survey Context -->
+<div class="grid-2-1">
+  <div class="card">
+    <div class="card-title">A. Survey Context &amp; Scope</div>
+    <table class="context-table">
+      <tr><td>Survey Title</td><td>Youth Aspiration Survey (YAS) — Hyderabad</td></tr>
+      <tr><td>Conducting Organization</td><td>Forward Trust (Lighthouse Initiative)</td></tr>
+      <tr><td>Survey Period</td><td>February 5 – February 18, 2026</td></tr>
+      <tr><td>Target Population</td><td>Youth aged 18–35 in peri-urban communities around Borabanda</td></tr>
+      <tr><td>Sampling Method</td><td>Community-based household enumeration</td></tr>
+      <tr><td>Total Valid Responses</td><td>1,254 (of 1,612 rows; 358 are blank/metadata)</td></tr>
+      <tr><td>Surveyors Deployed</td><td>76 field surveyors</td></tr>
+      <tr><td>Communities Covered</td><td>~30+ communities; primary: Borabanda, Site 3, Rajiv Gandhi Nagar, Mothi Nagar</td></tr>
+      <tr><td>Survey Instrument</td><td>KoboToolbox / ODK — 232 columns across demographics, employment, aspirations, skilling</td></tr>
+      <tr><td>Primary Objective</td><td>Map youth employment status, skill gaps, aspirations, willingness for Govt skilling programs</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">C. Strategic Implications</div>
+    <ul class="impl-list">
+      <li>Prioritize Digital &amp; Office skilling tracks — highest stated demand, clear employment pathways (BPO, KPO, retail admin)</li>
+      <li>Address information asymmetry first — 55.8% unaware of vocational options; targeted IEC campaigns can unlock latent demand</li>
+      <li>Borabanda Lighthouse is optimally positioned — ~91.7% willing to travel there; collocate skilling + placement services</li>
+      <li>Design gender-sensitive pathways — Beauty Parlour, Fashion Designing, and BPO tracks show female-skewed uptake</li>
+      <li>Align salary expectations — misalignment between ₹25K+ expectations and ₹15–20K market rates risks post-placement dropout</li>
+      <li>Embed job security framing in marketing — emphasize ESIC, PF, and permanent employment outcomes</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Headline Findings -->
+<div class="card" style="margin-bottom:14px">
+  <div class="card-title">B. Headline Findings <span class="badge">10 Key Insights</span></div>
+  <div class="findings-grid">
+    <div class="finding-card">
+      <div class="finding-num">#1</div>
+      <div class="finding-theme">Employment Crisis</div>
+      <div class="finding-text">62.3% are unemployed but willing to work — a substantial latent labour pool in high-density peri-urban communities.</div>
+    </div>
+    <div class="finding-card f-orange">
+      <div class="finding-num">#2</div>
+      <div class="finding-theme">Education Profile</div>
+      <div class="finding-text">Predominantly 12th pass (36.6%) and 10th pass (22.9%); only 20.3% are graduates or above.</div>
+    </div>
+    <div class="finding-card f-red">
+      <div class="finding-num">#3</div>
+      <div class="finding-theme">Skill Gap Acknowledged</div>
+      <div class="finding-text">Only 7.5% have ever enrolled in vocational training. 55.8% were unaware such courses existed.</div>
+    </div>
+    <div class="finding-card f-orange">
+      <div class="finding-num">#4</div>
+      <div class="finding-theme">Salary Mismatch</div>
+      <div class="finding-text">35.4% expect &gt;₹25,000/month; median HH income is ₹20–25K — expectations are near-ceiling.</div>
+    </div>
+    <div class="finding-card f-green">
+      <div class="finding-num">#5</div>
+      <div class="finding-theme">High Skilling Appetite</div>
+      <div class="finding-text">248 respondents (34.9%) are very willing to join Government skilling programs; 72% are willing or above.</div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num">#6</div>
+      <div class="finding-theme">Top Skill Demand</div>
+      <div class="finding-text">Digital Marketing (339), Office Executive (327), and Account Executive (259) are the top 3 preferred courses.</div>
+    </div>
+    <div class="finding-card f-purple">
+      <div class="finding-num">#7</div>
+      <div class="finding-theme">Aspiration vs. Reality Gap</div>
+      <div class="finding-text">"Any office work" &amp; Health Sector top aspirations; yet 57% of employed work in blue-collar roles.</div>
+    </div>
+    <div class="finding-card">
+      <div class="finding-num">#8</div>
+      <div class="finding-theme">Job Security Dominates</div>
+      <div class="finding-text">Job Security (759 mentions) and Earning Potential (586) are the two most critical job selection factors.</div>
+    </div>
+    <div class="finding-card f-orange">
+      <div class="finding-num">#9</div>
+      <div class="finding-theme">Proximity Constraint</div>
+      <div class="finding-text">62.3% unwilling to travel more than 30–60 min; 91.7% would travel to Borabanda Lighthouse.</div>
+    </div>
+    <div class="finding-card f-red">
+      <div class="finding-num">#10</div>
+      <div class="finding-theme">Gender Disparity</div>
+      <div class="finding-text">Females: 11.4% "not allowed to work" vs 3.3% male. Higher household responsibility burden.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 2: DEMOGRAPHICS -->
+<div class="section-title">2 · Demographics <span>Gender, Age, Religion, Caste, Marital Status, Household Profile, Assets, Language</span></div>
+
+<!-- Row 1: Gender + Age + Religion -->
+<div class="grid-3">
+  <div class="card">
+    <div class="card-title">2.1 Gender Distribution</div>
+    <div class="chart-wrap chart-wrap-sm"><canvas id="genderChart"></canvas></div>
+    <div style="margin-top:10px">
+      <div class="stat-pair">
+        <div class="stat-item"><div class="stat-big">753</div><div class="stat-label">Male (60.0%)</div></div>
+        <div class="stat-item"><div class="stat-big">501</div><div class="stat-label">Female (40.0%)</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">2.2 Age Group Distribution</div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="ageChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">2.3 Religion</div>
+    <div class="chart-wrap chart-wrap-sm"><canvas id="religionChart"></canvas></div>
+    <div class="insight" style="margin-top:8px"><strong>Hindu 68.3%, Muslim 25.8%, Christian 5.7%.</strong> Diverse community — program materials should be multi-faith sensitive.</div>
+  </div>
+</div>
+
+<!-- Row 2: Caste + Marital + Household Profile -->
+<div class="grid-3">
+  <div class="card">
+    <div class="card-title">2.4 Caste Category</div>
+    <div class="chart-wrap chart-wrap-sm"><canvas id="casteChart"></canvas></div>
+    <div class="insight" style="margin-top:8px"><strong>79.8% OBC + SC/ST</strong> — high welfare-eligible proportion; PMKVY, NSFDC targeting feasible.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">2.5 Marital Status</div>
+    <div class="chart-wrap chart-wrap-sm"><canvas id="maritalChart"></canvas></div>
+    <div class="insight" style="margin-top:8px"><strong>67.7% unmarried</strong> — majority are single youth with higher mobility and availability for full-time training.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">2.6 Household Profile <span class="badge">Distribution Summary</span></div>
+    <table>
+      <tr><th>Metric</th><th>Distribution</th></tr>
+      <tr><td>Household Size</td><td>4 members: 44.3% &nbsp;|&nbsp; 3 members: 22.5% &nbsp;|&nbsp; 5 members: 16.4% &nbsp;|&nbsp; >5: 10.1%</td></tr>
+      <tr><td>Youth per HH (18–35)</td><td>2 members: 44.9% &nbsp;|&nbsp; 1 member: 39.6% &nbsp;|&nbsp; 3 members: 9.7%</td></tr>
+      <tr><td>Earning Members</td><td>1 member: 50.7% &nbsp;|&nbsp; 2 members: 32.8% &nbsp;|&nbsp; 3 members: 11.6%</td></tr>
+      <tr><td>Chief Wage Earner</td><td>Father: 51.6% &nbsp;|&nbsp; Husband: 20.0% &nbsp;|&nbsp; Self: 13.3% &nbsp;|&nbsp; Mother: 7.3%</td></tr>
+      <tr><td>Chief Earner Occupation</td><td>Blue Collar: 58.5% &nbsp;|&nbsp; Entrepreneur: 19.2% &nbsp;|&nbsp; White Collar: 15.4%</td></tr>
+      <tr><td>HH Monthly Income (modal)</td><td>₹20,001–₹25,000 (23.1%) &nbsp;|&nbsp; ₹15,001–₹20,000 (18.5%)</td></tr>
+      <tr><td>HH Monthly Expenditure (modal)</td><td>₹5,000–₹10,000 (26.3%) &nbsp;|&nbsp; ₹10,001–₹15,000 (18.3%)</td></tr>
+      <tr><td>Savings Indicator</td><td>Income &gt; Expenditure for ~55–60% of households</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Row 3: Assets + Languages -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">2.7 Household Asset Ownership <span class="badge">% of HHs</span></div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="assetChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">2.8 Languages Spoken <span class="badge">Multi-select — % of Respondents</span></div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="langChart"></canvas></div>
+    <div class="insight"><strong>English spoken by 43.5%</strong> — but as a job barrier (300 mentions), depth matters more than awareness.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 3: EDUCATION & SKILLS -->
+<div class="section-title">3 · Education &amp; Skills <span>Highest Education, Current Status, Vocational Training Awareness, Enrollment, Counselling</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">3.1 Highest Education Level Distribution</div>
+    <div class="chart-wrap chart-wrap-lg"><canvas id="eduChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">3.2 Current Education Status + 3.5 Career Counselling</div>
+    <div class="grid-2" style="margin-bottom:12px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">Education Status (n=1,254)</div>
+        <div class="chart-wrap chart-wrap-sm"><canvas id="eduStatusChart"></canvas></div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy);margin-bottom:8px">Career Counselling Usefulness (n=190)</div>
+        <div class="chart-wrap chart-wrap-sm"><canvas id="counsellingChart"></canvas></div>
+      </div>
+    </div>
+    <div class="insight"><strong>36% currently pursuing education</strong> — design flexible evening/weekend batches. <strong>76.8% found counselling useful</strong> — validate embedding it in all tracks.</div>
+  </div>
+</div>
+
+<!-- Vocational Training -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">3.3 Vocational Training Awareness &amp; Enrollment <span class="badge">Critical Gap Indicators</span></div>
+    <div class="stat-pair" style="margin-bottom:12px">
+      <div class="stat-item red">
+        <div class="stat-big" style="color:#c0392b">55.8%</div>
+        <div class="stat-label">Unaware vocational courses exist (n=777)</div>
+      </div>
+      <div class="stat-item red">
+        <div class="stat-big" style="color:#c0392b">92.5%</div>
+        <div class="stat-label">Never enrolled in vocational training (n=1,121)</div>
+      </div>
+      <div class="stat-item amber">
+        <div class="stat-big" style="color:#7d5a00">83.7%</div>
+        <div class="stat-label">Have NOT undergone career counselling (n=974)</div>
+      </div>
+    </div>
+    <table>
+      <tr><th>Indicator</th><th class="right">Yes</th><th class="right">%</th><th class="right">No</th><th class="right">%</th></tr>
+      <tr><td>Aware of Vocational Courses</td><td class="right">441</td><td class="right">35.2%</td><td class="right">777</td><td class="right">62.0%</td></tr>
+      <tr><td>Ever Enrolled in Vocational Training</td><td class="right">94</td><td class="right">7.5%</td><td class="right">1,121</td><td class="right">89.4%</td></tr>
+      <tr><td>Undergone Career Counselling</td><td class="right">190</td><td class="right">15.1%</td><td class="right">974</td><td class="right">77.7%</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">3.4 Courses Taken Among Enrolled <span class="badge">n = 94 enrolled</span></div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="coursesEnrolledChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 4: EMPLOYMENT -->
+<div class="section-title">4 · Employment Analysis <span>Status, Occupation, Income, Benefits, Exit Reasons</span></div>
+
+<div class="grid-4">
+  <div class="card">
+    <div class="card-title">4.1 Employment Status</div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="emplStatusChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">4.2 Occupation Type <span class="badge">n=288 employed</span></div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="occupChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">4.5 Employment Benefits <span class="badge">n=288</span></div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="benefitsChart"></canvas></div>
+    <div class="insight" style="margin-top:6px"><strong>46.5% receive NO formal benefit</strong> — critical informality indicator for employer pre-screening.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">4.3 Individual Monthly Income <span class="badge">n=282 employed</span></div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="indIncomeChart"></canvas></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">4.4 HH Monthly Income vs. Expenditure Distribution <span class="badge">All Respondents</span></div>
+    <div class="chart-wrap chart-wrap-lg"><canvas id="hhIncomeChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">4.6 Reasons for Leaving Last Job <span class="badge">Ranked by Frequency</span></div>
+    <div class="chart-wrap chart-wrap-lg"><canvas id="exitChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 5: ASPIRATIONS & SKILLING -->
+<div class="section-title">5 · Aspirations &amp; Skilling <span>Job Aspirations, Preferred Courses, Salary Expectations, Job Preferences, Selection Factors</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">5.1 Job Role Aspirations <span class="badge">n=1,069 — Select up to 3</span></div>
+    <div class="chart-wrap chart-wrap-xl"><canvas id="aspirationsChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">5.2 Preferred Skilling Courses <span class="badge">n=711 willing to enroll</span></div>
+    <div class="chart-wrap chart-wrap-xl"><canvas id="coursesChart"></canvas></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">5.3 Salary Expectations <span class="badge">n=701 respondents</span></div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="salaryExpChart"></canvas></div>
+    <div class="insight"><strong>63.3% expect &gt;₹25,000/month</strong> — modal market entry for trained youth is ₹15–20K. Salary expectation module is essential to prevent post-placement dropout.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">5.4 Job Preference Parameters</div>
+    <table>
+      <tr><th>Parameter</th><th>Preference</th><th class="right">Count</th><th class="right">%</th><th>Program Design Implication</th></tr>
+      <tr><td>Fixed Timing Job</td><td>Yes</td><td class="right">859</td><td class="right">81.1%</td><td>Prefer structured hours — suits classroom delivery</td></tr>
+      <tr><td>Night Shift Acceptance</td><td>No</td><td class="right">769</td><td class="right">72.6%</td><td>Strong resistance — day-only placements preferred</td></tr>
+      <tr><td>Salary Type Preference</td><td>Fixed Salary</td><td class="right">495</td><td class="right">46.7%</td><td>Risk-aversion — avoid pure commission models</td></tr>
+      <tr><td>Travel Willingness</td><td>30–60 min</td><td class="right">466</td><td class="right">44.0%</td><td>Hyper-local placements critical; Lighthouse as hub</td></tr>
+    </table>
+    <div style="margin-top:14px">
+      <div class="card-title" style="margin-top:4px">5.5 Top Job Selection Factors <span class="badge">n=1,059</span></div>
+      <div class="chart-wrap chart-wrap-md"><canvas id="jobFactorsChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 6: JOB SEARCH & BARRIERS -->
+<div class="section-title">6 · Job Search &amp; Barriers <span>Challenges, Info Channels, Enrollment Willingness, Duration Preference, Daily Availability</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">6.1 Challenges While Looking for a Job <span class="badge">n=929 unemployed — Multi-select</span></div>
+    <div class="chart-wrap chart-wrap-xl"><canvas id="challengesChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">6.2 How Youth Find Job Information <span class="badge">Multi-select</span></div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="infoSourceChart"></canvas></div>
+    <div class="insight" style="margin-top:10px"><strong>Friends (61%) + Family (44%) = 105% combined</strong> — peer-ambassador and household IEC strategies will out-perform formal advertising.</div>
+    <div style="margin-top:14px">
+      <div class="card-title">6.5 Daily Time Available for Skilling <span class="badge">n=932</span></div>
+      <div class="chart-wrap chart-wrap-sm"><canvas id="dailyTimeChart"></canvas></div>
+      <div class="insight"><strong>67.4% available 1–2 hrs/day</strong> — design modular 1.5–2 hr sessions.</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">6.3 Willingness to Enroll in Government Skilling Program <span class="badge">n=1,069</span></div>
+    <div class="grid-2" style="margin-bottom:0">
+      <div class="chart-wrap chart-wrap-md"><canvas id="willingnessChart"></canvas></div>
+      <div>
+        <table style="margin-top:8px">
+          <tr><th>Willingness Level</th><th class="right">Count</th><th class="right">%</th><th>Strategic Note</th></tr>
+          <tr><td><strong style="color:var(--green)">Very Willing</strong></td><td class="right">248</td><td class="right">23.2%</td><td>First cohort priority</td></tr>
+          <tr><td><strong style="color:#2d6bc4">Willing</strong></td><td class="right">522</td><td class="right">48.8%</td><td>Reliable pipeline</td></tr>
+          <tr><td>Somewhat Willing</td><td class="right">162</td><td class="right">15.2%</td><td>Needs incentive comms</td></tr>
+          <tr><td>Not Willing</td><td class="right">137</td><td class="right">12.8%</td><td>Long-term tracking</td></tr>
+        </table>
+        <div class="insight" style="margin-top:8px"><strong>72% willing or above</strong> — program can realistically target 900+ enrollees from this survey population alone.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">6.4 Course Duration Preference <span class="badge">n=932</span></div>
+    <div class="grid-2" style="margin-bottom:0">
+      <div class="chart-wrap chart-wrap-md"><canvas id="durationChart"></canvas></div>
+      <div>
+        <table style="margin-top:8px">
+          <tr><th>Duration</th><th class="right">Count</th><th class="right">%</th></tr>
+          <tr><td>1 Month</td><td class="right">191</td><td class="right">20.5%</td></tr>
+          <tr><td>2 Months</td><td class="right">203</td><td class="right">21.8%</td></tr>
+          <tr><td><strong>3 Months (modal)</strong></td><td class="right">377</td><td class="right"><strong>40.5%</strong></td></tr>
+          <tr><td>6 Months</td><td class="right">147</td><td class="right">15.8%</td></tr>
+          <tr><td>12 Months</td><td class="right">12</td><td class="right">1.3%</td></tr>
+          <tr><td>12+ Months</td><td class="right">2</td><td class="right">0.2%</td></tr>
+        </table>
+        <div class="insight" style="margin-top:8px"><strong>3 months is modal (40.5%)</strong>. 1–3 months total 82.8% — balance depth vs. dropout by designing modular quarterly tracks.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 7: BUDGET FRAMEWORK -->
+<div class="section-title">7 · Budget Framework <span>Annual Operating Budget, Category Summary, Scaling Projections</span></div>
+
+<div class="grid-3">
+  <div class="card">
+    <div class="budget-total">
+      <div style="font-size:13px;opacity:.8;margin-bottom:4px">Phase 1 Total Annual Budget</div>
+      <div class="val">₹29,51,760</div>
+      <div class="sub">~₹29.5 Lakhs &nbsp;|&nbsp; Cost per Trainee: ₹24,598</div>
+    </div>
+    <div class="card-title">7.2 Budget Category Summary</div>
+    <div class="chart-wrap chart-wrap-md"><canvas id="budgetPieChart"></canvas></div>
+  </div>
+  <div class="card" style="grid-column: span 2">
+    <div class="card-title">7.1 Annual Operating Budget — Lighthouse Skills Program (Phase 1: Year 1)</div>
+    <table>
+      <tr><th>Category</th><th>Line Item</th><th class="right">Unit Cost (₹)</th><th class="right">Units/Year</th><th class="right">Annual Cost (₹)</th><th class="right">% Budget</th></tr>
+      <tr><td>Human Resources</td><td>Head Trainer (1 FTE)</td><td class="right">35,000</td><td class="right">12</td><td class="right">4,20,000</td><td class="right">14.2%</td></tr>
+      <tr><td>Human Resources</td><td>Assistant Trainer / Coordinator (1 FTE)</td><td class="right">25,000</td><td class="right">12</td><td class="right">3,00,000</td><td class="right">10.2%</td></tr>
+      <tr><td>Human Resources</td><td>Placement Officer (0.5 FTE)</td><td class="right">18,000</td><td class="right">12</td><td class="right">2,16,000</td><td class="right">7.3%</td></tr>
+      <tr><td>Human Resources</td><td>Community Mobilizer (1 FTE)</td><td class="right">15,000</td><td class="right">12</td><td class="right">1,80,000</td><td class="right">6.1%</td></tr>
+      <tr><td>Infrastructure</td><td>Venue Rent (Lighthouse co-share)</td><td class="right">25,000</td><td class="right">12</td><td class="right">3,00,000</td><td class="right">10.2%</td></tr>
+      <tr><td>Infrastructure</td><td>Utilities (Electricity, Internet, Water)</td><td class="right">8,000</td><td class="right">12</td><td class="right">96,000</td><td class="right">3.3%</td></tr>
+      <tr><td>Infrastructure</td><td>Equipment Amortization (IT + Vocational)</td><td class="right">15,000</td><td class="right">12</td><td class="right">1,80,000</td><td class="right">6.1%</td></tr>
+      <tr><td>Materials</td><td>Training Materials per Trainee</td><td class="right">500</td><td class="right">120</td><td class="right">60,000</td><td class="right">2.0%</td></tr>
+      <tr><td>Materials</td><td>Certificates &amp; Assessments</td><td class="right">200</td><td class="right">120</td><td class="right">24,000</td><td class="right">0.8%</td></tr>
+      <tr><td>Trainee Support</td><td>Trainee Stipend (₹1,500/mo × 3mo)</td><td class="right">1,500</td><td class="right">360</td><td class="right">5,40,000</td><td class="right">18.3%</td></tr>
+      <tr><td>Trainee Support</td><td>Travel Allowance (partial, one-time)</td><td class="right">500</td><td class="right">120</td><td class="right">60,000</td><td class="right">2.0%</td></tr>
+      <tr><td>Marketing &amp; IEC</td><td>Community Outreach &amp; Mobilization</td><td class="right">50,000</td><td class="right">4</td><td class="right">2,00,000</td><td class="right">6.8%</td></tr>
+      <tr><td>Marketing &amp; IEC</td><td>Digital Content (Social Media)</td><td class="right">15,000</td><td class="right">4</td><td class="right">60,000</td><td class="right">2.0%</td></tr>
+      <tr><td>Placement</td><td>Employer Engagement Events (2/year)</td><td class="right">40,000</td><td class="right">2</td><td class="right">80,000</td><td class="right">2.7%</td></tr>
+      <tr><td>Placement</td><td>Background Verification per Placed Trainee</td><td class="right">300</td><td class="right">84</td><td class="right">25,200</td><td class="right">0.9%</td></tr>
+      <tr><td>M&amp;E</td><td>Data Collection &amp; Reporting Tools</td><td class="right">20,000</td><td class="right">1</td><td class="right">20,000</td><td class="right">0.7%</td></tr>
+      <tr><td>M&amp;E</td><td>External Evaluation (Annual)</td><td class="right">50,000</td><td class="right">1</td><td class="right">50,000</td><td class="right">1.7%</td></tr>
+      <tr><td colspan="4"><strong>Subtotal (Before Contingency)</strong></td><td class="right"><strong>28,11,200</strong></td><td class="right"><strong>95.2%</strong></td></tr>
+      <tr><td>Contingency</td><td>5% buffer</td><td class="right">—</td><td class="right">—</td><td class="right">1,40,560</td><td class="right">4.8%</td></tr>
+      <tr style="background:#e8f0fe"><td colspan="4"><strong>TOTAL ANNUAL BUDGET (Phase 1)</strong></td><td class="right"><strong>29,51,760</strong></td><td class="right"><strong>100%</strong></td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- Scaling + Key Assumptions -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">7.3 Scaling Assumptions — Phase 2 &amp; 3 Projections</div>
+    <table>
+      <tr><th>Parameter</th><th>Phase 1 (Yr 1)</th><th>Phase 2 (Yr 2)</th><th>Phase 3 (Yr 3)</th><th>Assumption</th></tr>
+      <tr><td>Cohorts / Year</td><td>4</td><td>6</td><td>8</td><td>+2 cohorts/year as capacity builds</td></tr>
+      <tr><td>Trainees / Year</td><td>120</td><td>180</td><td>240</td><td>Linear scale with cohorts</td></tr>
+      <tr><td>Skilling Tracks Offered</td><td>5</td><td>8</td><td>12</td><td>Add Health, IT, Logistics in Year 2+</td></tr>
+      <tr><td>Target Placement Rate</td><td>70%</td><td>75%</td><td>80%</td><td>Improves as employer network matures</td></tr>
+      <tr><td>Estimated Budget (₹ Lakhs)</td><td>~14–16L</td><td>~20–22L</td><td>~26–28L</td><td>~30% increase per phase</td></tr>
+      <tr><td>Cost per Trainee (₹)</td><td>~11,500</td><td>~11,000</td><td>~10,800</td><td>Economies of scale with fixed costs</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">7.0 Key Assumptions <span class="badge">Program Design Inputs</span></div>
+    <table>
+      <tr><th>Parameter</th><th class="right">Value</th><th>Source / Basis</th></tr>
+      <tr><td>Target Batch Size (per cohort)</td><td class="right">30</td><td>Standard skilling batch; manageable for 1 trainer</td></tr>
+      <tr><td>No. of Cohorts per Year (Phase 1)</td><td class="right">4</td><td>Quarterly cadence; allows quality control</td></tr>
+      <tr><td>Total Trainees / Year (Phase 1)</td><td class="right">120</td><td>4 batches × 30 trainees</td></tr>
+      <tr><td>No. of Skilling Tracks</td><td class="right">5</td><td>Top 5 by demand: Digital Mktg, Office Exec, BPO, Beauty, Fashion</td></tr>
+      <tr><td>Average Course Duration</td><td class="right">3 months</td><td>Modal survey preference (40.5%)</td></tr>
+      <tr><td>Target Placement Rate</td><td class="right">70%</td><td>Industry benchmark for quality programs</td></tr>
+      <tr><td>Female Beneficiary Target</td><td class="right">45%</td><td>40% female share + 5% positive action</td></tr>
+      <tr><td>Course Hours / Day</td><td class="right">2 hrs</td><td>Modal survey preference (35.0%)</td></tr>
+      <tr><td>Trainer Cost / Month</td><td class="right">₹35,000</td><td>Market rate for vocational trainer in Hyderabad</td></tr>
+      <tr><td>Per Trainee Stipend / Month</td><td class="right">₹1,500</td><td>~10% of modal salary expectation; retention incentive</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 8: DATA QUALITY -->
+<div class="section-title">8 · Data Quality &amp; Methodology <span>Quality Summary, Core Column Register, Analytical Methodology</span></div>
+
+<div class="grid-2">
+  <div class="card">
+    <div class="card-title">8.1 Data Quality Summary</div>
+    <table>
+      <tr><th>Metric</th><th class="right">Value</th><th>Assessment</th></tr>
+      <tr><td>Total Raw Rows</td><td class="right">1,612</td><td>Includes valid + blank/metadata rows</td></tr>
+      <tr><td>Valid Respondent Rows</td><td class="right">1,254</td><td class="dq-good">77.8% usable — strong field quality</td></tr>
+      <tr><td>Blank / Metadata Rows</td><td class="right">358</td><td class="dq-warn">Survey form artifacts — confirmed via Gender NaN</td></tr>
+      <tr><td>Duplicate Records (UUID)</td><td class="right">0</td><td class="dq-good">All UUIDs unique — no duplicate submissions</td></tr>
+      <tr><td>Total Columns</td><td class="right">232</td><td>Demographics, multi-select, GPS, metadata</td></tr>
+      <tr><td>Columns with 100% Null</td><td class="right">8</td><td class="dq-warn">_validation_status, _tags, structural empties</td></tr>
+      <tr><td>Columns with &gt;80% Null</td><td class="right">~35</td><td class="dq-warn">Conditional "If other, specify" fields — expected</td></tr>
+      <tr><td>Community Naming Inconsistency</td><td class="right">228 raw</td><td class="dq-crit">High — standardized to ~30 canonical names</td></tr>
+      <tr><td>Surveyor Name Inconsistency</td><td class="right">76 entries</td><td class="dq-warn">Moderate — groupable by name similarity</td></tr>
+      <tr><td>Age Range Compliance</td><td class="right">18–35</td><td class="dq-good">Full — survey filter working correctly</td></tr>
+      <tr><td>GPS Coverage</td><td class="right">~60%</td><td class="dq-warn">Partial — Lat/Long for ~60% records</td></tr>
+      <tr><td>Survey Period Anomalies</td><td class="right">None</td><td class="dq-good">All timestamps within Feb 5–18 window</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <div class="card-title">8.3 Analytical Methodology</div>
+    <table>
+      <tr><th>Item</th><th>Detail</th></tr>
+      <tr><td><strong>Scope Filter</strong></td><td>Analysis restricted to 1,254 valid respondents (Q.8 Gender not null). 358 blank rows excluded.</td></tr>
+      <tr><td><strong>Community Standardization</strong></td><td>String matching applied to consolidate ~228 raw variants into ~30 canonical names via regex rules.</td></tr>
+      <tr><td><strong>Multi-select Handling</strong></td><td>Binary (0/1) columns per option; sum across gives mention count. Percentages vs. responding n, not total N.</td></tr>
+      <tr><td><strong>Missing Data Treatment</strong></td><td>DNA and DK excluded from percentage denominators. Noted explicitly where exclusion affects interpretation.</td></tr>
+      <tr><td><strong>Employment Split</strong></td><td>3 segments: Employed (n=288), Unemployed-Willing (n=781), Unemployed-Unwilling (n=148). DNA (n=37) excluded.</td></tr>
+      <tr><td><strong>Budget Framework</strong></td><td>First-principles using demand signals mapped to standard NGO/social-enterprise cost structures. Indicative only.</td></tr>
+      <tr><td><strong>Descriptive vs. Inferential</strong></td><td>All analysis is descriptive/exploratory. No hypothesis testing — cross-sectional, convenience-sampled survey.</td></tr>
+    </table>
+    <div style="margin-top:14px">
+      <div class="card-title">8.2 Key Column Register (Core Analytical Variables)</div>
+      <table>
+        <tr><th>Column</th><th>Type</th><th>Values / Range</th><th>Role</th></tr>
+        <tr><td>Q.8 Gender</td><td>Binary Cat.</td><td>Male / Female</td><td>Primary stratifier</td></tr>
+        <tr><td>Q.7 Age</td><td>Numeric</td><td>18–35; mean=24.4</td><td>Age group segmentation</td></tr>
+        <tr><td>Q.12 Caste</td><td>Categorical</td><td>OBC/SC-ST/General</td><td>Welfare targeting</td></tr>
+        <tr><td>Q.16 Education Level</td><td>Ordinal</td><td>10 levels: no edu → PG</td><td>Education profiling</td></tr>
+        <tr><td>Q.32 Employment Status</td><td>Categorical</td><td>3 segments + DNA</td><td>Core outcome variable</td></tr>
+        <tr><td>Q.54 Skilling Willingness</td><td>Ordinal</td><td>4 levels</td><td>Pipeline estimation</td></tr>
+        <tr><td>Q.55 Course Preference</td><td>Multi-select</td><td>12 courses</td><td>Curriculum demand signal</td></tr>
+        <tr><td>Q.58 Travel to Lighthouse</td><td>Binary</td><td>Yes / No</td><td>Confirms delivery node validity</td></tr>
+        <tr><td>_uuid</td><td>UUID (unique)</td><td>36-char</td><td>Primary key; 0 duplicates verified</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ SECTION 9: RECOMMENDATIONS -->
+<div class="section-title">9 · Recommendations &amp; Program Success Metrics <span>3-Tier Action Plan + KPI Dashboard</span></div>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="tier-header"><span class="tier-badge tier-1">TIER 1</span><span style="font-weight:700;color:#c0392b">Immediate Actions — 0 to 3 Months</span></div>
+  <table>
+    <tr><th>#</th><th>Recommendation</th><th>Evidence Base</th><th>Responsible</th><th>KPI</th></tr>
+    <tr><td><span class="rank-badge top3">1</span></td><td>Launch Digital Marketing + Office Executive batch immediately</td><td>Highest-demand courses (339+327 mentions); aligned to BPO/admin placements locally</td><td>Program Team</td><td>Batch filled (30 trainees) within 2 weeks of launch</td></tr>
+    <tr><td><span class="rank-badge top3">2</span></td><td>Deploy WhatsApp-based IEC campaign in all 30+ communities</td><td>55.8% unaware of vocational options; Friends (761) + Online (529) are top info channels</td><td>Mobilizer + Comms</td><td>500+ unique WhatsApp deliveries in Week 1</td></tr>
+    <tr><td><span class="rank-badge top3">3</span></td><td>Map top 10 employers within 5km of Lighthouse (BPO, retail, hospitals)</td><td>Job location is 4th most critical factor; 62.3% want ≤60 min travel</td><td>Placement Officer</td><td>10 employer MOUs signed before batch completion</td></tr>
+    <tr><td><span class="rank-badge">4</span></td><td>Conduct parent/household orientation for first cohort</td><td>Parents' desire (130 mentions); "Not allowed to work" affects 71 respondents</td><td>Community Mobilizer</td><td>80%+ parent attendance at orientation</td></tr>
+    <tr><td><span class="rank-badge">5</span></td><td>Set up English communication module as embedded component</td><td>Speaking English is 4th largest job barrier (300 mentions = 32.3% unemployed)</td><td>Trainer</td><td>English module embedded in 100% of tracks from Day 1</td></tr>
+  </table>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="tier-header"><span class="tier-badge tier-2">TIER 2</span><span style="font-weight:700;color:#e67e22">Medium-Term Actions — 3 to 6 Months</span></div>
+  <table>
+    <tr><th>#</th><th>Recommendation</th><th>Evidence Base</th><th>Responsible</th><th>KPI</th></tr>
+    <tr><td><span class="rank-badge">6</span></td><td>Add Beauty Parlour + Fashion Designing tracks for female cohort</td><td>Beauty Parlour (229) + Fashion Designing (216) — top female preferences; 40% respondents are female</td><td>Program Team</td><td>≥60% female enrollment; 70%+ placement within 60 days</td></tr>
+    <tr><td><span class="rank-badge">7</span></td><td>Build placement scorecard tracking employer-wise quality</td><td>46.5% of employed youth receive NO employment benefits — need formal sector pipeline</td><td>Placement Officer</td><td>Monthly scorecard; ≥50% placed in ESI+PF-compliant roles</td></tr>
+    <tr><td><span class="rank-badge">8</span></td><td>Introduce career counselling as Week 1 mandatory module</td><td>76.8% found counselling useful; only 15.1% of all youth have been counselled</td><td>Trainer + Counsellor</td><td>100% trainees receive structured counselling by end of Week 1</td></tr>
+    <tr><td><span class="rank-badge">9</span></td><td>Launch BPO/KPO track with dedicated English + typing component</td><td>BPO/KPO 5th job aspiration (182 mentions); ₹15–20K entry salary matches 22% expectation</td><td>Program Team</td><td>1 BPO hiring partner signed; first batch hired within 45 days</td></tr>
+    <tr><td><span class="rank-badge">10</span></td><td>Implement peer ambassador scheme for enrollment drives</td><td>Friends (61%) is #1 job info channel — most trusted enrollment source</td><td>Community Mobilizer</td><td>30 ambassadors; 20+ referrals each per quarter</td></tr>
+  </table>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="tier-header"><span class="tier-badge tier-3">TIER 3</span><span style="font-weight:700;color:#2d6bc4">Strategic / Long-Term — 6 to 18 Months</span></div>
+  <table>
+    <tr><th>#</th><th>Recommendation</th><th>Rationale</th><th>Responsible</th><th>KPI</th></tr>
+    <tr><td><span class="rank-badge">11</span></td><td>Expand to IT tracks (Python, Java)</td><td>IT: 206 aspiration mentions; Python (135) + Java (132) preferences; ₹25K+ salary tier</td><td>Program Team + IT partner</td><td>1 IT track/year; ≥30% placed in IT roles within 6 months</td></tr>
+    <tr><td><span class="rank-badge">12</span></td><td>Establish Lighthouse as multi-community employment hub</td><td>91.7% willing to travel there; serves Rajiv Gandhi Nagar, Site 3, Mothi Nagar</td><td>Management + GHMC</td><td>Formally recognized as GHMC Skill Hub; MOU with municipality</td></tr>
+    <tr><td><span class="rank-badge">13</span></td><td>Build salary expectation alignment curriculum module</td><td>35.4% expect &gt;₹25K; modal starting salary is ₹15–20K — misalignment will cause dropout</td><td>Counsellor + Trainer</td><td>≥70% trainees demonstrate realistic salary understanding at exit</td></tr>
+    <tr><td><span class="rank-badge">14</span></td><td>Longitudinal tracking: 6-month and 12-month employment follow-up</td><td>Current dataset is point-in-time; need retention, earnings progression, benefit uptake data</td><td>M&amp;E Officer</td><td>80%+ contact rate at 6-month follow-up; outcome dashboard live</td></tr>
+    <tr><td><span class="rank-badge">15</span></td><td>Explore NREGA + Telangana skilling scheme funding integration</td><td>Only ~6 respondents receive govt assistance — massive under-penetration of existing schemes</td><td>Program Director</td><td>At least 1 active government co-funding arrangement within Year 1</td></tr>
+  </table>
+</div>
+
+<!-- Program Success Metrics -->
+<div class="card">
+  <div class="card-title">9A. Program Success Metrics Dashboard <span class="badge">Baseline → Target Tracking</span></div>
+  <table>
+    <tr>
+      <th>Metric</th>
+      <th class="center">Baseline (Survey)</th>
+      <th class="center">Year 1 Target</th>
+      <th class="center">Year 2 Target</th>
+      <th>Measurement Method</th>
+    </tr>
+    <tr>
+      <td>Vocational Training Enrollment Rate</td>
+      <td class="center"><span style="color:#c0392b;font-weight:700">7.5%</span> (94/1,254)</td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">25%+</span></td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">40%+</span></td>
+      <td>Admin: enrollment register + survey repeat</td>
+    </tr>
+    <tr>
+      <td>Skilling Awareness Rate</td>
+      <td class="center"><span style="color:#c0392b;font-weight:700">35.2%</span> (441/1,254)</td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">60%</span></td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">80%</span></td>
+      <td>Quarterly IEC reach survey in communities</td>
+    </tr>
+    <tr>
+      <td>Placement Rate (30-day post-course)</td>
+      <td class="center"><em>N/A (Baseline)</em></td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">65%</span></td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">70%</span></td>
+      <td>Exit + placement tracking database</td>
+    </tr>
+    <tr>
+      <td>Formal Employment Benefits Coverage</td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">53.5%</span> get some benefit</td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">70%+</span> in ESI+PF role</td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">80%</span></td>
+      <td>Employer verification + trainee self-report</td>
+    </tr>
+    <tr>
+      <td>Average Starting Salary (Placed)</td>
+      <td class="center"><em>N/A (Baseline)</em></td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">₹15,000–₹18,000</span></td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">₹16,000–₹20,000</span></td>
+      <td>Monthly payslip verification at 3-month mark</td>
+    </tr>
+    <tr>
+      <td>Female Beneficiary Share</td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">40.0%</span> (survey)</td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">≥45%</span></td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">≥50%</span></td>
+      <td>Enrollment register; gender disaggregated</td>
+    </tr>
+    <tr>
+      <td>Career Counselling Coverage</td>
+      <td class="center"><span style="color:#c0392b;font-weight:700">15.1%</span> (190/1,254)</td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">100%</span> of enrollees</td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">100% + community</span></td>
+      <td>Trainer log + counsellor session record</td>
+    </tr>
+    <tr>
+      <td>Parent Engagement Rate</td>
+      <td class="center"><em>Not tracked</em></td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">75%</span> of trainee families</td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">80%</span></td>
+      <td>Attendance register at orientation</td>
+    </tr>
+    <tr>
+      <td>Cost per Successful Placement</td>
+      <td class="center"><em>N/A (Baseline)</em></td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">≤₹16,500</span></td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">≤₹15,000</span></td>
+      <td>Budget tracker ÷ placed trainees count</td>
+    </tr>
+    <tr>
+      <td>90-day Employment Retention</td>
+      <td class="center"><em>N/A (Baseline)</em></td>
+      <td class="center"><span style="color:#e67e22;font-weight:700">80%</span></td>
+      <td class="center"><span style="color:#27ae60;font-weight:700">85%</span></td>
+      <td>Trainee follow-up call at 90 days post-placement</td>
+    </tr>
+  </table>
+</div>
+
+<div class="footer">
+  Hyderabad Youth Aspiration Survey — Executive Dashboard &nbsp;|&nbsp; Borabanda Lighthouse Initiative &nbsp;|&nbsp; Forward Trust &nbsp;|&nbsp; n = 1,254 Respondents &nbsp;|&nbsp; Survey Period: Feb 5–18, 2026
+</div>
+
+</div><!-- /container -->
+
+<!-- ══════════════════════════════════════════════════════ CHART.JS SCRIPTS -->
+<script>
+Chart.defaults.font.family = "'Segoe UI', Arial, sans-serif";
+Chart.defaults.font.size = 11;
+
+const COLORS = {
+  navy: '#1a3a6b', blue: '#2d6bc4', blueL: '#4a90d9', teal: '#0d7377',
+  green: '#27ae60', greenL: '#52c68a', orange: '#e67e22', amber: '#f39c12',
+  red: '#c0392b', redL: '#e74c3c', purple: '#6c3483', purpleL: '#9b59b6',
+  gray: '#7f8c8d', grayL: '#bdc3c7', pink: '#e91e8c', cyan: '#00acc1'
+};
+const PALETTE = [COLORS.blue, COLORS.green, COLORS.orange, COLORS.red, COLORS.purple,
+  COLORS.teal, COLORS.amber, COLORS.blueL, COLORS.greenL, COLORS.purpleL,
+  COLORS.pink, COLORS.cyan, COLORS.navy, '#8BC34A', '#FF5722'];
+
+function makeChart(id, type, labels, datasets, opts={}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  new Chart(ctx, {
+    type, data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: opts.legend !== false, position: opts.legendPos || 'bottom', labels: { boxWidth: 12, padding: 8 } },
+        tooltip: { callbacks: opts.tooltipCb || {} } },
+      scales: type === 'bar' || type === 'horizontalBar' ? {
+        x: { beginAtZero: true, ticks: { maxRotation: opts.rotateX || 30 }, grid: { color: '#eee' } },
+        y: { beginAtZero: true, grid: { color: '#eee' } }
+      } : {},
+      indexAxis: opts.horizontal ? 'y' : 'x',
+      ...opts.extra
+    }
+  });
+}
+
+// ── 2.1 Gender
+makeChart('genderChart', 'doughnut', ['Male (60.0%)', 'Female (40.0%)'],
+  [{ data: [753, 501], backgroundColor: [COLORS.blue, COLORS.pink], borderWidth: 2 }],
+  { legend: true });
+
+// ── 2.2 Age Groups
+makeChart('ageChart', 'bar', ['18–20', '21–23', '24–26', '27–29', '30–32', '33–35'],
+  [{ label: 'Count', data: [323, 263, 289, 194, 118, 67],
+    backgroundColor: [COLORS.blue, COLORS.blueL, COLORS.teal, COLORS.green, COLORS.amber, COLORS.orange],
+    borderRadius: 5 }], { legend: false });
+
+// ── 2.3 Religion
+makeChart('religionChart', 'doughnut', ['Hindu 68.3%', 'Muslim 25.8%', 'Christian 5.7%', "DNA 0.2%"],
+  [{ data: [857, 324, 71, 2], backgroundColor: [COLORS.orange, COLORS.green, COLORS.blue, COLORS.gray], borderWidth: 2 }],
+  { legend: true });
+
+// ── 2.4 Caste
+makeChart('casteChart', 'doughnut', ['OBC 53.4%', 'SC/ST 26.2%', 'General 8.2%', 'Other 4.8%', "DK 1.1%", "DNA 6.3%"],
+  [{ data: [670, 328, 103, 60, 14, 79], backgroundColor: [COLORS.blue, COLORS.red, COLORS.green, COLORS.orange, COLORS.gray, COLORS.grayL], borderWidth: 2 }]);
+
+// ── 2.5 Marital Status
+makeChart('maritalChart', 'doughnut', ['Unmarried 67.7%', 'Married 31.3%', 'Widowed 0.3%', 'Divorced 0.2%', "DNA 0.4%"],
+  [{ data: [849, 393, 4, 3, 5], backgroundColor: [COLORS.blue, COLORS.amber, COLORS.red, COLORS.orange, COLORS.gray], borderWidth: 2 }]);
+
+// ── 2.7 Assets
+makeChart('assetChart', 'bar', ['Television', 'Gas Connection', 'Smartphone', 'Fridge', 'Button Phone', 'WiFi', 'Computer/Laptop'],
+  [{ label: '% HHs Owning', data: [89.9, 89.3, 86.4, 66.5, 21.5, 20.8, 20.2],
+    backgroundColor: PALETTE, borderRadius: 4 }],
+  { legend: false, rotateX: 30 });
+
+// ── 2.8 Languages
+makeChart('langChart', 'bar', ['Telugu', 'Hindi', 'English', 'Urdu', 'Kannada', 'Tamil', 'Marathi', 'Other'],
+  [{ label: '% of Respondents', data: [90.7, 67.5, 43.5, 8.5, 3.2, 1.0, 0.7, 0.9],
+    backgroundColor: [COLORS.blue, COLORS.orange, COLORS.green, COLORS.purple, COLORS.teal, COLORS.amber, COLORS.red, COLORS.gray],
+    borderRadius: 4 }],
+  { legend: false, rotateX: 0 });
+
+// ── 3.1 Education Level
+makeChart('eduChart', 'bar',
+  ['No Education', '1st Std', '2nd–5th Std', '6th–9th Std', '10th Pass', '12th Pass', 'Diploma', 'Graduation', 'Post-Grad', 'DNA'],
+  [{ label: 'Count', data: [60, 1, 45, 79, 287, 459, 9, 254, 44, 14],
+    backgroundColor: [COLORS.red, COLORS.redL, COLORS.orange, COLORS.amber, COLORS.blueL, COLORS.blue, COLORS.teal, COLORS.green, COLORS.purple, COLORS.gray],
+    borderRadius: 4 }],
+  { legend: false, rotateX: 35 });
+
+// ── 3.2 Education Status
+makeChart('eduStatusChart', 'doughnut',
+  ['Currently Pursuing 36.0%', 'Not Pursuing 61.8%', 'DNA 2.2%'],
+  [{ data: [452, 775, 27], backgroundColor: [COLORS.green, COLORS.blue, COLORS.gray], borderWidth: 2 }]);
+
+// ── 3.5 Counselling
+makeChart('counsellingChart', 'doughnut',
+  ['Found Useful 76.8%', 'Not Useful 23.2%'],
+  [{ data: [146, 44], backgroundColor: [COLORS.green, COLORS.red], borderWidth: 2 }]);
+
+// ── 3.4 Courses Taken
+makeChart('coursesEnrolledChart', 'bar',
+  ['CEC', 'Tailoring', 'Java (Jawa)', 'Beautician', 'Computer', 'Java', 'Digital Mktg', 'Data Analytics', 'Tally', 'Tally (alt)'],
+  [{ label: 'Count', data: [6, 4, 4, 3, 3, 3, 2, 2, 2, 2],
+    backgroundColor: PALETTE, borderRadius: 4 }],
+  { legend: false, rotateX: 35 });
+
+// ── 4.1 Employment Status
+makeChart('emplStatusChart', 'doughnut',
+  ['Unemployed–Willing 62.3%', 'Employed 23.0%', 'Unemployed–Unwilling 11.8%', 'DNA 3.0%'],
+  [{ data: [781, 288, 148, 37], backgroundColor: [COLORS.red, COLORS.green, COLORS.orange, COLORS.gray], borderWidth: 2 }]);
+
+// ── 4.2 Occupation Type
+makeChart('occupChart', 'doughnut',
+  ['Blue Collar 55.2%', 'White Collar 22.9%', 'Entrepreneur 20.5%', 'Other 1.4%'],
+  [{ data: [159, 66, 59, 4], backgroundColor: [COLORS.orange, COLORS.blue, COLORS.green, COLORS.gray], borderWidth: 2 }]);
+
+// ── 4.5 Employment Benefits
+makeChart('benefitsChart', 'bar',
+  ['Salary Slip', 'PF', 'Health Insurance', 'No Benefit'],
+  [{ label: '% Employed (n=288)', data: [35.8, 32.3, 25.0, 46.5],
+    backgroundColor: [COLORS.green, COLORS.blue, COLORS.teal, COLORS.red], borderRadius: 4 }],
+  { legend: false });
+
+// ── 4.3 Individual Income
+makeChart('indIncomeChart', 'bar',
+  ['≤5K', '5–10K', '10–15K', '15–20K', '20–25K', '25–30K', '30–35K', '>35K'],
+  [{ label: '% Employed', data: [0.4, 8.9, 17.0, 27.7, 19.5, 11.0, 6.4, 9.2],
+    backgroundColor: [COLORS.redL, COLORS.red, COLORS.orange, COLORS.amber, COLORS.blueL, COLORS.blue, COLORS.teal, COLORS.green],
+    borderRadius: 4 }],
+  { legend: false });
+
+// ── 4.4 HH Income vs Expenditure
+makeChart('hhIncomeChart', 'bar',
+  ['≤5K', '5–10K', '10–15K', '15–20K', '20–25K', '25–30K', '30–35K', '>35K'],
+  [{ label: 'HH Income', data: [9, 23, 72, 232, 290, 222, 103, 195], backgroundColor: COLORS.blue, borderRadius: 4 },
+   { label: 'HH Expenditure', data: [62, 330, 230, 254, 114, 57, 0, 48], backgroundColor: COLORS.orange, borderRadius: 4 }]);
+
+// ── 4.6 Exit Reasons
+makeChart('exitChart', 'bar',
+  ['Insuff. Salary', 'Health Issues', 'Long Hours', 'Family Resp.', 'No Growth', 'Education/Skilling', 'Migration', 'Contract Ended', 'Unsafe Env.', 'Transport', 'Family Pressure', 'Work-Life Bal.', 'Harassment'],
+  [{ label: 'Count', data: [185, 100, 86, 53, 46, 43, 42, 34, 33, 28, 23, 19, 14],
+    backgroundColor: [COLORS.red, COLORS.orange, COLORS.amber, COLORS.blue, COLORS.blueL, COLORS.teal, COLORS.green, COLORS.purple, COLORS.purpleL, COLORS.gray, COLORS.pink, COLORS.cyan, COLORS.navy],
+    borderRadius: 4 }],
+  { legend: false, horizontal: true, extra: { indexAxis: 'y' } });
+
+// ── 5.1 Aspirations
+makeChart('aspirationsChart', 'bar',
+  ['Office Work', 'Health Sector', 'Sales & Mktg', 'Billing/Cashier', 'Manufacturing', 'Logistics', 'Retail-Store', 'IT Industries', 'Fashion Design', 'Own Business', 'BPO/KPO', 'Beauty Parlour', 'Delivery/Gig', 'Labour', 'Hospitality'],
+  [{ label: 'Mentions', data: [321, 311, 271, 244, 243, 219, 208, 206, 192, 188, 182, 180, 106, 69, 68],
+    backgroundColor: PALETTE, borderRadius: 4 }],
+  { legend: false, horizontal: true, extra: { indexAxis: 'y' } });
+
+// ── 5.2 Skilling Courses
+makeChart('coursesChart', 'bar',
+  ['Digital Marketing', 'Office Executive', 'Account Executive', 'Graphic Design', 'Beauty Parlour', 'Fashion Designing', 'Data Analytics', 'B.P.O.', 'Python', 'Java', 'BFSI', 'UI/UX Developer'],
+  [{ label: 'Demand Count (n=711)', data: [339, 327, 259, 239, 229, 216, 183, 146, 135, 132, 89, 44],
+    backgroundColor: PALETTE, borderRadius: 4 }],
+  { legend: false, horizontal: true, extra: { indexAxis: 'y' } });
+
+// ── 5.3 Salary Expectations
+makeChart('salaryExpChart', 'bar',
+  ['<₹10K', '₹10–15K', '₹15–20K', '₹20–25K', '>₹25K'],
+  [{ label: 'Count (n=701)', data: [4, 37, 229, 345, 444],
+    backgroundColor: [COLORS.gray, COLORS.amber, COLORS.blueL, COLORS.blue, COLORS.navy], borderRadius: 5 }],
+  { legend: false });
+
+// ── 5.5 Job Selection Factors
+makeChart('jobFactorsChart', 'bar',
+  ['Job Security', 'Earning Potential', 'Full/Part Time', 'Permanent Job', 'Job Location', 'Emp. Benefits', 'Social Status', 'Career Growth', 'Gender Role', "Parent's Desire", 'Edu Alignment', 'Peer Choice', 'Low Wait Time'],
+  [{ label: 'Mentions (n=1,059)', data: [759, 586, 470, 457, 448, 332, 282, 195, 158, 130, 88, 76, 72],
+    backgroundColor: PALETTE.slice(0,13), borderRadius: 4 }],
+  { legend: false, horizontal: true, extra: { indexAxis: 'y' } });
+
+// ── 6.1 Challenges
+makeChart('challengesChart', 'bar',
+  ['Insuff. Salary', 'Lack of Skills', 'Distance to Work', 'Lack of Opps.', 'Speaking English', 'Insuff. Info.', 'Lack of Guidance', 'Time Constraints', 'Not Allowed to Work'],
+  [{ label: 'Mentions (n=929)', data: [615, 543, 369, 338, 300, 200, 185, 136, 71],
+    backgroundColor: [COLORS.red, COLORS.redL, COLORS.orange, COLORS.amber, COLORS.blue, COLORS.blueL, COLORS.teal, COLORS.green, COLORS.purple],
+    borderRadius: 4 }],
+  { legend: false, horizontal: true, extra: { indexAxis: 'y' } });
+
+// ── 6.2 Info Sources
+makeChart('infoSourceChart', 'bar',
+  ['Friends', 'Family', 'Online', 'Skilling Inst.', 'Educational Inst.', 'Govt. Rep.'],
+  [{ label: 'Mentions', data: [761, 556, 529, 266, 173, 77],
+    backgroundColor: [COLORS.blue, COLORS.green, COLORS.orange, COLORS.teal, COLORS.purple, COLORS.amber], borderRadius: 4 }],
+  { legend: false });
+
+// ── 6.5 Daily Time
+makeChart('dailyTimeChart', 'bar',
+  ['1 Hour', '2 Hours', '3 Hours', '4 Hours', '>4 Hours'],
+  [{ label: '% of Respondents', data: [32.0, 35.0, 26.1, 6.2, 0.8],
+    backgroundColor: [COLORS.blueL, COLORS.blue, COLORS.navy, COLORS.teal, COLORS.gray], borderRadius: 4 }],
+  { legend: false });
+
+// ── 6.3 Willingness
+makeChart('willingnessChart', 'doughnut',
+  ['Very Willing 23.2%', 'Willing 48.8%', 'Somewhat 15.2%', 'Not Willing 12.8%'],
+  [{ data: [248, 522, 162, 137], backgroundColor: [COLORS.green, COLORS.blueL, COLORS.amber, COLORS.red], borderWidth: 2 }]);
+
+// ── 6.4 Duration
+makeChart('durationChart', 'doughnut',
+  ['1 Month 20.5%', '2 Months 21.8%', '3 Months 40.5%', '6 Months 15.8%', '12 Months 1.3%', '>12M 0.2%'],
+  [{ data: [191, 203, 377, 147, 12, 2], backgroundColor: [COLORS.gray, COLORS.blueL, COLORS.blue, COLORS.teal, COLORS.green, COLORS.navy], borderWidth: 2 }]);
+
+// ── 7.2 Budget Pie
+makeChart('budgetPieChart', 'doughnut',
+  ['HR 37.8%', 'Infrastructure 19.5%', 'Trainee Support 20.3%', 'Mktg & IEC 8.8%', 'Materials 2.8%', 'Placement 3.6%', 'M&E 2.4%', 'Contingency 4.8%'],
+  [{ data: [1116000, 576000, 600000, 260000, 84000, 105200, 70000, 140560],
+    backgroundColor: [COLORS.blue, COLORS.teal, COLORS.green, COLORS.orange, COLORS.amber, COLORS.purple, COLORS.blueL, COLORS.gray], borderWidth: 2 }]);
+
+</script>
+</body>
+</html>
