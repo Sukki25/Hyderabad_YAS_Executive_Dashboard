@@ -194,6 +194,14 @@
 
   /* ── FOOTER ── */
   .footer { text-align: center; padding: 20px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); margin-top: 30px; }
+
+  /* --- Layout hardening (prevents grid overflow / misalignment) --- */
+  .grid-2 > *, .grid-3 > *, .grid-4 > * { min-width: 0; }
+  .card { min-width: 0; }
+  .chart-wrap { overflow: hidden; }
+  table { width: 100%; table-layout: fixed; }
+  th, td { word-break: break-word; }
+
 </style>
 </head>
 <body>
